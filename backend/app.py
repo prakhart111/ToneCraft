@@ -39,59 +39,69 @@ def measurePitch(voiceID, f0min, f0max, unit):
 
     return meanF0, stdevF0, hnr, localJitter, localabsoluteJitter, rapJitter, ppq5Jitter, ddpJitter, localShimmer, localdbShimmer, apq3Shimmer, aqpq5Shimmer, apq11Shimmer, ddaShimmer
 
+# praat script main
+def run_single(file):
+	file.save('./audio/' + file.filename )
+	wave_file = './audio/' + file.filename
+	sound = parselmouth.Sound(wave_file)
+	(meanF0, stdevF0, hnr, localJitter, localabsoluteJitter, rapJitter, ppq5Jitter, ddpJitter, localShimmer, localdbShimmer, apq3Shimmer, aqpq5Shimmer, apq11Shimmer, ddaShimmer) = measurePitch(sound, 75, 500, "Hertz")
+	
+	df = pd.DataFrame(np.column_stack([wave_file, meanF0, stdevF0, hnr, localJitter, localabsoluteJitter, rapJitter, ppq5Jitter, ddpJitter, localShimmer, localdbShimmer, apq3Shimmer, aqpq5Shimmer, apq11Shimmer, ddaShimmer]),
+		   columns=['voiceID', 'meanF0Hz', 'stdevF0Hz', 'HNR', 'localJitter', 'localabsoluteJitter', 'rapJitter','ppq5Jitter', 'ddpJitter', 'localShimmer', 'localdbShimmer', 'apq3Shimmer', 'apq5Shimmer',
+	      'apq11Shimmer', 'ddaShimmer'])
+	json=df.to_json(orient='records')
+	os.remove(wave_file)
+	return json
+    
 
-# create lists to put the results
-file_list = []
-mean_F0_list = []
-sd_F0_list = []
-hnr_list = []
-localJitter_list = []
-localabsoluteJitter_list = []
-rapJitter_list = []
-ppq5Jitter_list = []
-ddpJitter_list = []
-localShimmer_list = []
-localdbShimmer_list = []
-apq3Shimmer_list = []
-aqpq5Shimmer_list = []
-apq11Shimmer_list = []
-ddaShimmer_list = []
+#openai integration
+import openai
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# Go through the wave file and measure pitch
-def run():
-    for wave_file in glob.glob("audio/*.wav"):
-        sound = parselmouth.Sound(wave_file)
-        (meanF0, stdevF0, hnr, localJitter, localabsoluteJitter, rapJitter, ppq5Jitter, ddpJitter, localShimmer, localdbShimmer, apq3Shimmer, aqpq5Shimmer, apq11Shimmer, ddaShimmer) = measurePitch(sound, 75, 500, "Hertz")
-        file_list.append(wave_file)
-        mean_F0_list.append(meanF0) # make a mean F0 list
-        sd_F0_list.append(stdevF0) # make a sd F0 list
-        hnr_list.append(hnr)
-        localJitter_list.append(localJitter)
-        localabsoluteJitter_list.append(localabsoluteJitter)
-        rapJitter_list.append(rapJitter)
-        ppq5Jitter_list.append(ppq5Jitter)
-        ddpJitter_list.append(ddpJitter)
-        localShimmer_list.append(localShimmer)
-        localdbShimmer_list.append(localdbShimmer)
-        apq3Shimmer_list.append(apq3Shimmer)
-        aqpq5Shimmer_list.append(aqpq5Shimmer)
-        apq11Shimmer_list.append(apq11Shimmer)
-        ddaShimmer_list.append(ddaShimmer)
-        break # only do the first file
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    df = pd.DataFrame(np.column_stack([file_list, mean_F0_list, sd_F0_list, hnr_list, localJitter_list, localabsoluteJitter_list, rapJitter_list, ppq5Jitter_list, ddpJitter_list, localShimmer_list, localdbShimmer_list, apq3Shimmer_list, aqpq5Shimmer_list, apq11Shimmer_list, ddaShimmer_list]),
-                                columns=['voiceID', 'meanF0Hz', 'stdevF0Hz', 'HNR', 'localJitter', 'localabsoluteJitter', 'rapJitter',
-                                            'ppq5Jitter', 'ddpJitter', 'localShimmer', 'localdbShimmer', 'apq3Shimmer', 'apq5Shimmer',
-                                            'apq11Shimmer', 'ddaShimmer'])  
+def get_prompt(sound_data, tags, text, word_count):
+	return """
+    You are a gen-ai tone based content writer tool. You analyse the tone, with data points given below, and modify provided text to match the tone, while keeping the meaning of the text intact.
+    You are looking for the following metrics:
+    - Mean F0
+    - Standard Deviation of F0
+    - Harmonic-to-Noise Ratio
+    - Local Jitter
+    - Local Absolute Jitter
+    - Rap Jitter
+    - PPQ5 Jitter
+    - DDP Jitter
+    - Local Shimmer
+    - Local dB Shimmer
+    - APQ3 Shimmer
+    - APQ5 Shimmer
+    - APQ11 Shimmer
+    - DDA Shimmer
+    You are given the following voice data: """ + sound_data + """ in JSON format (HIGHEST PRIORITY)
+    You are given the following text: """ + text + """
+    Here are some tags selected by the user: """ + tags + """
+    Expected Word Count: """ + word_count + """
+    Return the modified text ONLY.
+    """
 
-    # Write out the updated dataframe
-    # df.to_csv("result.csv", index=False)
-    print("Done!")
-    # return df in json format
-    json = df.to_json(orient='records')
-    df=[]
-    return json
-
+def run_prompt(prompt_):
+    model_engine = "text-davinci-003"
+    try:
+        completion = openai.Completion.create(
+            engine=model_engine,
+            prompt=prompt_,
+            max_tokens=2048 - len(prompt_),
+            n=1,
+            stop=None,
+            temperature=0,
+        )
+        return completion.choices[0].text
+    except Exception as e:
+        print(e)
+        return "Error"
 
 # Using flask to make an api
 from flask import Flask, jsonify, request
@@ -100,7 +110,7 @@ from flask import Flask, jsonify, request
 # creating a Flask app
 app = Flask(__name__)
 
-@app.route('/', methods = ['GET', 'POST'])
+@app.route('/', methods = ['GET'])
 def home():
 	if(request.method == 'GET'):
 		data = "hello world"
@@ -111,13 +121,23 @@ def home():
 def api():
 	if(request.method == 'POST'):
 		file = request.files['file']
-		file.save('./audio/upload.wav')
+		content = request.form['content']
+		tags = request.form['tags']
+		word_count = request.form['word_count']
+		# file.save('./audio/upload.wav')
 		filename = file.filename
 		print("File received: " + filename)
-		json_res = run() # run the praat script
-		# wait for the praat script to finish running
-		return jsonify({'filename': filename, 'message': 'success', 'voice_data_json': json_res})
-	json_res = ""
+		try:
+			json_res = run_single(file) # run the praat script
+			print("Voice data from PRAAT : " + json_res)
+			prompt = get_prompt(json_res, tags, content, word_count)
+			text = run_prompt(prompt)
+			return jsonify({'filename': filename, 'message': 'success', 'voice_data_json': text})
+		except Exception as e:
+			print(e)
+			return jsonify({'filename': filename, 'message': 'error'})
+            
+
 	
 # driver function
 if __name__ == '__main__':
