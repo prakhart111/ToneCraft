@@ -110,6 +110,10 @@ from flask import Flask, jsonify, request
 # creating a Flask app
 app = Flask(__name__)
 
+# prevent CORS error
+from flask_cors import CORS
+CORS(app)
+
 @app.route('/', methods = ['GET'])
 def home():
 	if(request.method == 'GET'):
@@ -120,6 +124,8 @@ def home():
 @app.route('/api', methods = ['POST'])
 def api():
 	if(request.method == 'POST'):
+		print(request.files)
+		print(request.form)
 		file = request.files['file']
 		content = request.form['content']
 		tags = request.form['tags']
