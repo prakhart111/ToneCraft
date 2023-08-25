@@ -32,7 +32,7 @@ export default function Contact() {
     formData.append("tags", data.tags)
     formData.append("word_count", data.word_count)
     try{
-        const res = await fetch("http://localhost:5000/api", {
+        const res = await fetch("https://tone-craft.vercel.app/api", {
             method: "POST",
             body: formData
         })
