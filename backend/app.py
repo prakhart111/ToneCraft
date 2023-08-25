@@ -141,7 +141,7 @@ def api():
 			return jsonify({'filename': filename, 'message': 'success', 'voice_data_json': text})
 		except Exception as e:
 			print(e)
-			return jsonify({'filename': filename, 'message': 'error'})
+			return jsonify({'filename': filename, 'message': 'error', 'error': e})
             
 
 	
