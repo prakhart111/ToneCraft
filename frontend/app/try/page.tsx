@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import axios from "axios"
+import ProgressBar from "@/components/ui/progress-bar"
 
 export default function Contact() {
 
   const [buttonText, setButtonText] = useState("Copy")
-
+  const [progress, setProgress] = useState(0)
   const [data, setData] = useState({
     audio_file: "",
     text_content: "",
@@ -27,6 +28,16 @@ export default function Contact() {
 
   // api call
   const handleSubmit = async (data:any) => {
+    // progress bar
+    let i = 0
+    const interval = setInterval(() => {
+      i = i + 1
+      setProgress(i)
+      if(i === 10){
+        clearInterval(interval)
+      }
+    }, 1000);
+    // form data
     const formData = new FormData()
     formData.append("file", data.audio_file)
     formData.append("content", data.text_content)
@@ -34,7 +45,7 @@ export default function Contact() {
     formData.append("word_count", data.word_count)
     try{
         // request with content type multipart/form-data axios
-        const res = await axios.post("http://prakhart.pythonanywhere.com/api", formData, {
+        const res = await axios.post("https://prakhart.pythonanywhere.com/api", formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -46,6 +57,8 @@ export default function Contact() {
         setLoading(false)
     } catch (err) {
         console.log(err)
+        setLoading(false)
+        alert("Our servers are busy, Please try again later. \n\nSorry for the inconvenience caused.")
     }
   }
 
@@ -117,7 +130,11 @@ export default function Contact() {
         {!loading ? <button 
         // disable if fields are empty
         disabled={data.audio_file === "" || data.text_content === ""}
-        className={cn(buttonVariants({ size: "lg", className: "w-1/2" }))}>Submit</button> : <div className="text-xl font-bold text-center">Processing Your Request...</div>}
+        className={cn(buttonVariants({ size: "lg", className: "w-1/2" }))}>Submit</button> : <div className="text-xl font-bold text-center">Processing Your Request...
+        {/* progress, max 10 seconds */}
+        <ProgressBar progress={progress*10} />
+
+        </div>}
 
         <p> * - Required Fields</p>
         </form>
