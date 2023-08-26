@@ -50,6 +50,7 @@ def run_single(file):
 		   columns=['voiceID', 'meanF0Hz', 'stdevF0Hz', 'HNR', 'localJitter', 'localabsoluteJitter', 'rapJitter','ppq5Jitter', 'ddpJitter', 'localShimmer', 'localdbShimmer', 'apq3Shimmer', 'apq5Shimmer',
 	      'apq11Shimmer', 'ddaShimmer'])
 	json=df.to_json(orient='records')
+	print("Last Message before deletion:")
 	os.remove(wave_file)
 	return json
     
