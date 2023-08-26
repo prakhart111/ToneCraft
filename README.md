@@ -1,8 +1,16 @@
 # ToneCraft
 Style & Tone Preserving Content Generation
 
-**Try ToneCraft Now: https://tonecraft-ai.vercel.app/**
+**Try ToneCraft Now: https://tonecraft-ai.vercel.app/** <br>
 **API Deployment: https://prakhart.pythonanywhere.com/**
+
+
+## How it works
+Here's a screen recording of the working of the application.
+*https://youtube.com/shorts/O9ptza18mjg?feature=share*
+
+## Idea Presentation Video
+*https://youtu.be/7Tfnp-ssoEA*
 
 ## Using Locally
 - Clone the repository
@@ -10,6 +18,7 @@ Style & Tone Preserving Content Generation
 ```bash
 cd backend
 pip install -r requirements.txt
+# Add your OpenAI Key in backend .env file
 ```
 - Install the dependencies > frontend
 ```bash
@@ -30,12 +39,6 @@ py app.py
 # Make sure you are in the frontend directory
 npm run dev
 ```
-
-## How it works
-Here's a screen recording of the working of the application.
-
-## Idea Presentation Video
-
 
 
 ## Working example of API
