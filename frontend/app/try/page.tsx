@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
+import axios from "axios"
 
 export default function Contact() {
 
@@ -32,14 +33,16 @@ export default function Contact() {
     formData.append("tags", data.tags)
     formData.append("word_count", data.word_count)
     try{
-        const res = await fetch("https://tone-craft.vercel.app/api", {
-            method: "POST",
-            body: formData
-        })
-        console.log(res)
-        const json = await res.json()
-        console.log(json)
-        setRecivedData(json)
+        // request with content type multipart/form-data axios
+        const res = await axios.post("https://tone-craft.vercel.app/api", formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })  
+
+        console.log(res.data)
+        // console.log(json)
+        setRecivedData(res.data)
         setLoading(false)
     } catch (err) {
         console.log(err)
