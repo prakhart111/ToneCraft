@@ -34,7 +34,7 @@ export default function Contact() {
     formData.append("word_count", data.word_count)
     try{
         // request with content type multipart/form-data axios
-        const res = await axios.post("https://tone-craft.vercel.app/api", formData, {
+        const res = await axios.post("http://prakhart.pythonanywhere.com/api", formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
