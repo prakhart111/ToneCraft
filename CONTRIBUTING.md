@@ -1,0 +1,4 @@
+- Fork or clone the repository
+- Add required credentials in the .env file in both frontend & backend
+- Work on your local copy of repo, then create a PR with valid description.
+- Thanks!
