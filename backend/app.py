@@ -61,7 +61,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = ''
 
 def get_prompt(sound_data, tags, text, word_count):
 	return """
@@ -121,28 +121,37 @@ def home():
 		data = "hello world"
 		return jsonify({'data': data})
 
-# post route that recieves a wav file only
+# post route that receives a wav file, openai api key, and other fields from user
 @app.route('/api', methods = ['POST'])
 def api():
-	if(request.method == 'POST'):
-		print(request.files)
-		print(request.form)
-		file = request.files['file']
-		content = request.form['content']
-		tags = request.form['tags']
-		word_count = request.form['word_count']
-		# file.save('./audio/upload.wav')
-		filename = file.filename
-		print("File received: " + filename)
-		try:
-			json_res = run_single(file) # run the praat script
-			print("Voice data from PRAAT : " + json_res)
-			prompt = get_prompt(json_res, tags, content, word_count)
-			text = run_prompt(prompt)
-			return jsonify({'filename': filename, 'message': 'success', 'voice_data_json': text})
-		except Exception as e:
-			print(e)
-			return jsonify({'filename': filename, 'message': 'error', 'error': e})
+    if(request.method == 'POST'):
+        print(request.files)
+        print(request.form)
+
+        # Receive OpenAI API key from user
+        user_api_key = request.form.get('api_key')
+        if not user_api_key:
+            return jsonify({'message': 'error', 'error': 'API key is missing'}), 400
+
+        # Set OpenAI API key to the user's provided key
+        openai.api_key = user_api_key
+
+        file = request.files['file']
+        content = request.form['content']
+        tags = request.form['tags']
+        word_count = request.form['word_count']
+        filename = file.filename
+        print("File received: " + filename)
+
+        try:
+            json_res = run_single(file)  # run the praat script
+            print("Voice data from PRAAT: " + json_res)
+            prompt = get_prompt(json_res, tags, content, word_count)
+            text = run_prompt(prompt)
+            return jsonify({'filename': filename, 'message': 'success', 'voice_data_json': text})
+        except Exception as e:
+            print(e)
+            return jsonify({'filename': filename, 'message': 'error', 'error': str(e)}), 500
             
 
 	
